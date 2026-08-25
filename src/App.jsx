@@ -1,197 +1,190 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import Sidebar from "./components/Sidebar";
 import Navbar from "./components/Navbar";
 import Dashboard from "./components/Dashboard";
 import Students from "./components/Students";
 import AddStudent from "./components/AddStudent";
+import EditStudent from "./components/EditStudent";
 import Results from "./components/Results";
 import Settings from "./components/Settings";
-import EditStudent from "./components/EditStudent";
 
 import "./App.css";
 
+const DEFAULT_SETTINGS = {
+  adminName: "Admin",
+  email: "admin@example.com",
+  institute: "Student Management System",
+  passingMarks: 40,
+  semester: "1st Semester",
+};
+
+function getSavedSettings() {
+  try {
+    const saved = localStorage.getItem("settings");
+
+    if (!saved) {
+      return { ...DEFAULT_SETTINGS };
+    }
+
+    const parsed = JSON.parse(saved);
+
+    return {
+      ...DEFAULT_SETTINGS,
+      ...parsed,
+      passingMarks:
+        Number(parsed.passingMarks) || DEFAULT_SETTINGS.passingMarks,
+      semester:
+        parsed.semester || DEFAULT_SETTINGS.semester,
+    };
+  } catch (error) {
+    console.error("Failed to load settings:", error);
+
+    return { ...DEFAULT_SETTINGS };
+  }
+}
+
+function getSavedStudents() {
+  try {
+    const saved = localStorage.getItem("students");
+    const savedSettings = getSavedSettings();
+
+    if (!saved) {
+      return [];
+    }
+
+    const parsed = JSON.parse(saved);
+
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    const migratedStudents = parsed.map((student) => ({
+      ...student,
+      semester:
+        student.semester ||
+        savedSettings.semester ||
+        DEFAULT_SETTINGS.semester,
+      marks: Number(student.marks) || 0,
+    }));
+
+    localStorage.setItem(
+      "students",
+      JSON.stringify(migratedStudents)
+    );
+
+    return migratedStudents;
+  } catch (error) {
+    console.error("Failed to load students:", error);
+
+    return [];
+  }
+}
+
 function App() {
-  const [activeSection, setActiveSection] = useState("dashboard");
-  const [editingStudent, setEditingStudent] = useState(null);
+  const savedSettings = getSavedSettings();
+
+  const [students, setStudents] = useState(getSavedStudents);
+
+  const [passingMarks, setPassingMarks] = useState(
+    Number(savedSettings.passingMarks) || 40
+  );
+
+  const [defaultSemester, setDefaultSemester] = useState(
+    savedSettings.semester || "1st Semester"
+  );
 
   const [darkMode, setDarkMode] = useState(() => {
     return localStorage.getItem("darkMode") === "true";
   });
 
-  const [students, setStudents] = useState(() => {
-    const savedStudents = localStorage.getItem("students");
+  const [activeSection, setActiveSection] = useState("dashboard");
 
-    if (savedStudents) {
-      try {
-        return JSON.parse(savedStudents);
-      } catch {
-        return [];
-      }
-    }
+  const [editingStudent, setEditingStudent] = useState(null);
 
-    return [
-      {
-        id: "ST001",
-        name: "Rahul Kumar",
-        course: "B.Tech",
-        marks: 85,
-        status: "Pass",
-      },
-      {
-        id: "ST002",
-        name: "Priya Das",
-        course: "B.Tech",
-        marks: 91,
-        status: "Pass",
-      },
-      {
-        id: "ST003",
-        name: "Aman Singh",
-        course: "BCA",
-        marks: 72,
-        status: "Pass",
-      },
-      {
-        id: "ST004",
-        name: "Sneha Patel",
-        course: "BCA",
-        marks: 88,
-        status: "Pass",
-      },
-      {
-        id: "ST005",
-        name: "Rohit Sharma",
-        course: "BCA",
-        marks: 38,
-        status: "Fail",
-      },
-    ];
-  });
+  const saveStudents = (updatedStudents) => {
+    setStudents(updatedStudents);
 
-  useEffect(() => {
-    localStorage.setItem("students", JSON.stringify(students));
-  }, [students]);
-
-  useEffect(() => {
-    localStorage.setItem("darkMode", String(darkMode));
-  }, [darkMode]);
+    localStorage.setItem(
+      "students",
+      JSON.stringify(updatedStudents)
+    );
+  };
 
   const handleAddStudent = (studentData) => {
     const marks = Number(studentData.marks);
 
-    setStudents((prevStudents) => {
-      const newStudent = {
-        id: `ST${String(prevStudents.length + 1).padStart(3, "0")}`,
-        name: studentData.name.trim(),
-        course: studentData.course,
-        marks: marks,
-        status: marks >= 40 ? "Pass" : "Fail",
-      };
+    const newStudent = {
+      id: Date.now().toString(),
+      registrationNo: studentData.registrationNo.trim(),
+      name: studentData.name.trim(),
+      course: studentData.course,
+      semester: defaultSemester,
+      marks,
+      status:
+        marks >= Number(passingMarks)
+          ? "Pass"
+          : "Fail",
+    };
 
-      return [...prevStudents, newStudent];
-    });
+    const updatedStudents = [
+      ...students,
+      newStudent,
+    ];
+
+    saveStudents(updatedStudents);
 
     setActiveSection("students");
   };
 
   const handleDeleteStudent = (id) => {
-    setStudents((prevStudents) => {
-      const remainingStudents = prevStudents.filter(
-        (student) => student.id !== id
-      );
+    const updatedStudents = students.filter(
+      (student) => student.id !== id
+    );
 
-      return remainingStudents.map((student, index) => ({
-        ...student,
-        id: `ST${String(index + 1).padStart(3, "0")}`,
-      }));
-    });
+    saveStudents(updatedStudents);
+  };
+
+  const handleEditStudent = (student) => {
+    setEditingStudent(student);
+    setActiveSection("edit");
   };
 
   const handleUpdateStudent = (updatedStudent) => {
-    const marks = Number(updatedStudent.marks);
+    const updatedStudents = students.map((student) => {
+      if (student.id !== updatedStudent.id) {
+        return student;
+      }
 
-    const studentWithUpdatedStatus = {
-      ...updatedStudent,
-      marks: marks,
-      status: marks >= 40 ? "Pass" : "Fail",
-    };
+      const marks = Number(updatedStudent.marks);
 
-    setStudents((prevStudents) =>
-      prevStudents.map((student) =>
-        student.id === studentWithUpdatedStatus.id
-          ? studentWithUpdatedStatus
-          : student
-      )
-    );
+      return {
+        ...student,
+        course: updatedStudent.course,
+        semester:
+          updatedStudent.semester ||
+          student.semester ||
+          defaultSemester,
+        marks,
+        status:
+          marks >= Number(passingMarks)
+            ? "Pass"
+            : "Fail",
+      };
+    });
+
+    saveStudents(updatedStudents);
 
     setEditingStudent(null);
     setActiveSection("students");
   };
 
-  const renderSection = () => {
-    switch (activeSection) {
-      case "dashboard":
-        return (
-          <Dashboard
-            students={students}
-            setActiveSection={setActiveSection}
-          />
-        );
-
-      case "students":
-        return (
-          <Students
-            students={students}
-            onDeleteStudent={handleDeleteStudent}
-            onEditStudent={(student) => {
-              setEditingStudent(student);
-              setActiveSection("edit");
-            }}
-            setActiveSection={setActiveSection}
-          />
-        );
-
-      case "add":
-        return (
-          <AddStudent
-            onAddStudent={handleAddStudent}
-            setActiveSection={setActiveSection}
-          />
-        );
-
-      case "edit":
-        return (
-          <EditStudent
-            student={editingStudent}
-            onUpdateStudent={handleUpdateStudent}
-            setActiveSection={setActiveSection}
-          />
-        );
-
-      case "results":
-        return <Results students={students} />;
-
-      case "settings":
-        return (
-          <Settings
-            darkMode={darkMode}
-            setDarkMode={setDarkMode}
-          />
-        );
-
-      default:
-        return (
-          <Dashboard
-            students={students}
-            setActiveSection={setActiveSection}
-          />
-        );
-    }
-  };
-
   return (
-    <div className={`app ${darkMode ? "dark-mode" : ""}`}>
+    <div
+      className={`app ${
+        darkMode ? "dark-mode" : ""
+      }`}
+    >
       <Sidebar
         activeSection={activeSection}
         setActiveSection={setActiveSection}
@@ -203,14 +196,65 @@ function App() {
           setDarkMode={setDarkMode}
         />
 
-        <main
-          className={`content ${
-            activeSection === "dashboard"
-              ? "dashboard-content"
-              : ""
-          }`}
-        >
-          {renderSection()}
+        <main className="content">
+          {activeSection === "dashboard" && (
+            <Dashboard
+              students={students}
+              defaultSemester={defaultSemester}
+              passingMarks={passingMarks}
+              setActiveSection={setActiveSection}
+            />
+          )}
+
+          {activeSection === "students" && (
+            <Students
+              students={students}
+              passingMarks={passingMarks}
+              defaultSemester={defaultSemester}
+              onDeleteStudent={handleDeleteStudent}
+              onEditStudent={handleEditStudent}
+              setActiveSection={setActiveSection}
+            />
+          )}
+
+          {activeSection === "add" && (
+            <AddStudent
+              onAddStudent={handleAddStudent}
+              setActiveSection={setActiveSection}
+              students={students}
+              defaultSemester={defaultSemester}
+            />
+          )}
+
+          {activeSection === "edit" && (
+            <EditStudent
+              student={editingStudent}
+              students={students}
+              passingMarks={passingMarks}
+              defaultSemester={defaultSemester}
+              onUpdateStudent={handleUpdateStudent}
+              setActiveSection={setActiveSection}
+            />
+          )}
+
+          {activeSection === "results" && (
+            <Results
+              students={students}
+              passingMarks={passingMarks}
+            />
+          )}
+
+          {activeSection === "settings" && (
+            <Settings
+              darkMode={darkMode}
+              setDarkMode={setDarkMode}
+              setStudents={setStudents}
+              passingMarks={passingMarks}
+              setPassingMarks={setPassingMarks}
+              defaultSemester={defaultSemester}
+              setDefaultSemester={setDefaultSemester}
+            />
+          )}
         </main>
       </div>
     </div>

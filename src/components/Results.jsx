@@ -1,260 +1,258 @@
 import { useState } from "react";
 
-function Results({ students = [] }) {
+function Results({
+  students = [],
+  passingMarks = 40,
+}) {
   const [search, setSearch] = useState("");
-  const [courseFilter, setCourseFilter] = useState("All");
+  const [filter, setFilter] = useState("All");
+  const [semesterFilter, setSemesterFilter] =
+    useState("All");
 
-  // Students data ko Results ke format mein convert kar rahe hain
-  const results = students.map((student) => ({
-    ...student,
-    semester:
-      student.semester ||
-      (student.course === "B.Tech"
-        ? "6th Semester"
-        : "4th Semester"),
-  }));
+  const semesters = [
+    ...new Set(
+      students
+        .map((student) => student.semester)
+        .filter(Boolean)
+    ),
+  ];
 
-  // Grade calculate
-  const getGrade = (marks) => {
-    if (marks >= 90) return "A+";
-    if (marks >= 80) return "A";
-    if (marks >= 70) return "B";
-    if (marks >= 60) return "C";
-    if (marks >= 50) return "D";
-    return "F";
-  };
+  const filteredStudents = students.filter(
+    (student) => {
+      const searchText =
+        search.toLowerCase().trim();
 
-  // Pass / Fail calculate
-  const getStatus = (marks) => {
-    return marks >= 40 ? "Pass" : "Fail";
-  };
+      const matchesSearch =
+        student.name
+          ?.toLowerCase()
+          .includes(searchText) ||
+        student.registrationNo
+          ?.toLowerCase()
+          .includes(searchText) ||
+        student.course
+          ?.toLowerCase()
+          .includes(searchText) ||
+        student.semester
+          ?.toLowerCase()
+          .includes(searchText);
 
-  // Search + Course Filter
-  const filteredResults = results.filter((student) => {
-    const searchText = search.toLowerCase().trim();
+      const marks = Number(student.marks);
 
-    const matchesSearch =
-      student.name.toLowerCase().includes(searchText) ||
-      student.id.toLowerCase().includes(searchText) ||
-      student.course.toLowerCase().includes(searchText);
+      const status =
+        marks >= Number(passingMarks)
+          ? "Pass"
+          : "Fail";
 
-    const matchesCourse =
-      courseFilter === "All" ||
-      student.course === courseFilter;
+      const matchesFilter =
+        filter === "All" ||
+        status === filter;
 
-    return matchesSearch && matchesCourse;
-  });
+      const matchesSemester =
+        semesterFilter === "All" ||
+        student.semester === semesterFilter;
 
-  // Summary calculations
-  const totalStudents = results.length;
-
-  const passedStudents = results.filter(
-    (student) => student.marks >= 40
-  ).length;
-
-  const failedStudents = results.filter(
-    (student) => student.marks < 40
-  ).length;
-
-  const averageMarks =
-    totalStudents > 0
-      ? results.reduce(
-          (total, student) => total + Number(student.marks),
-          0
-        ) / totalStudents
-      : 0;
+      return (
+        matchesSearch &&
+        matchesFilter &&
+        matchesSemester
+      );
+    }
+  );
 
   return (
     <section className="results-page">
 
-      {/* Page Heading */}
       <div className="page-heading">
+
         <h2>Results</h2>
-        <p>View and manage student academic results.</p>
-      </div>
 
-      {/* Result Summary */}
-      <div className="result-stats">
-
-        {/* Total Students */}
-        <div className="result-stat-card">
-          <div className="result-stat-icon">👨‍🎓</div>
-
-          <div>
-            <p>Total Students</p>
-            <h3>{totalStudents}</h3>
-          </div>
-        </div>
-
-        {/* Passed */}
-        <div className="result-stat-card">
-          <div className="result-stat-icon">✓</div>
-
-          <div>
-            <p>Passed</p>
-            <h3>{passedStudents}</h3>
-          </div>
-        </div>
-
-        {/* Failed */}
-        <div className="result-stat-card">
-          <div className="result-stat-icon">✕</div>
-
-          <div>
-            <p>Failed</p>
-            <h3>{failedStudents}</h3>
-          </div>
-        </div>
-
-        {/* Average */}
-        <div className="result-stat-card">
-          <div className="result-stat-icon">📊</div>
-
-          <div>
-            <p>Average Marks</p>
-            <h3>{averageMarks.toFixed(1)}%</h3>
-          </div>
-        </div>
+        <p>
+          View student academic results.
+          Passing marks: {passingMarks}%
+        </p>
 
       </div>
 
-      {/* Toolbar */}
-      <div className="results-toolbar">
+      <div className="students-toolbar">
 
-        {/* Search */}
         <div className="search-box">
+
           <span>🔍</span>
 
           <input
             type="text"
-            placeholder="Search student..."
+            placeholder="Search students..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) =>
+              setSearch(e.target.value)
+            }
           />
+
         </div>
 
-        {/* Course Filter */}
-        <select
-          value={courseFilter}
-          onChange={(e) => setCourseFilter(e.target.value)}
-        >
-          <option value="All">All Courses</option>
-          <option value="B.Tech">B.Tech</option>
-          <option value="BCA">BCA</option>
-          <option value="BBA">BBA</option>
-          <option value="MCA">MCA</option>
-        </select>
+        <div className="student-actions">
+
+          {/* Status Filter */}
+          <select
+            value={filter}
+            onChange={(e) =>
+              setFilter(e.target.value)
+            }
+          >
+            <option value="All">
+              All Results
+            </option>
+
+            <option value="Pass">
+              Passed
+            </option>
+
+            <option value="Fail">
+              Failed
+            </option>
+          </select>
+
+          {/* Semester Filter */}
+          <select
+            value={semesterFilter}
+            onChange={(e) =>
+              setSemesterFilter(e.target.value)
+            }
+          >
+            <option value="All">
+              All Semesters
+            </option>
+
+            {semesters.map((semester) => (
+              <option
+                key={semester}
+                value={semester}
+              >
+                {semester}
+              </option>
+            ))}
+          </select>
+
+        </div>
 
       </div>
 
-      {/* Results Card */}
-      <div className="results-card">
+      <div className="students-card">
 
-        {/* Table Header */}
         <div className="table-header">
+
           <h3>Student Results</h3>
 
           <span>
-            {filteredResults.length} Results
+            {filteredStudents.length} Students
           </span>
+
         </div>
 
-        {/* Table */}
         <div className="table-wrapper">
 
           <table>
 
             <thead>
               <tr>
+                <th>#</th>
                 <th>Student</th>
-                <th>ID</th>
+                <th>Registration Number</th>
                 <th>Course</th>
                 <th>Semester</th>
                 <th>Marks</th>
-                <th>Grade</th>
                 <th>Status</th>
               </tr>
             </thead>
 
             <tbody>
 
-              {filteredResults.map((student) => {
-                const marks = Number(student.marks);
-                const grade = getGrade(marks);
-                const status = getStatus(marks);
+              {filteredStudents.map(
+                (student, index) => {
+                  const marks =
+                    Number(student.marks);
 
-                return (
-                  <tr key={student.id}>
+                  const status =
+                    marks >= Number(passingMarks)
+                      ? "Pass"
+                      : "Fail";
 
-                    {/* Student */}
-                    <td>
-                      <div className="student-cell">
+                  return (
+                    <tr key={student.id}>
 
-                        <div className="table-avatar">
-                          {student.name
-                            .charAt(0)
-                            .toUpperCase()}
+                      <td>{index + 1}</td>
+
+                      <td>
+                        <div className="student-cell">
+
+                          <div className="table-avatar">
+                            {student.name
+                              ?.charAt(0)
+                              .toUpperCase()}
+                          </div>
+
+                          <span className="student-name-box">
+                            {student.name}
+                          </span>
+
                         </div>
+                      </td>
 
-                        <strong>
-                          {student.name}
-                        </strong>
+                      <td>
+                        <span className="table-value-box">
+                          {student.registrationNo ||
+                            "Not Available"}
+                        </span>
+                      </td>
 
-                      </div>
-                    </td>
+                      <td>
+                        <span className="table-value-box">
+                          {student.course}
+                        </span>
+                      </td>
 
-                    {/* ID */}
-                    <td>{student.id}</td>
+                      <td>
+                        <span className="table-value-box">
+                          {student.semester ||
+                            "Not Available"}
+                        </span>
+                      </td>
 
-                    {/* Course */}
-                    <td>{student.course}</td>
+                      <td>
+                        <span className="table-value-box marks-box">
+                          {marks}%
+                        </span>
+                      </td>
 
-                    {/* Semester */}
-                    <td>{student.semester}</td>
+                      <td>
+                        <span
+                          className={`status ${
+                            status === "Pass"
+                              ? "status-pass"
+                              : "status-fail"
+                          }`}
+                        >
+                          {status}
+                        </span>
+                      </td>
 
-                    {/* Marks */}
-                    <td>
-                      <strong>
-                        {marks}%
-                      </strong>
-                    </td>
-
-                    {/* Grade */}
-                    <td>
-                      <span className="grade-badge">
-                        {grade}
-                      </span>
-                    </td>
-
-                    {/* Status */}
-                    <td>
-                      <span
-                        className={`status ${
-                          status === "Pass"
-                            ? "status-pass"
-                            : "status-fail"
-                        }`}
-                      >
-                        {status}
-                      </span>
-                    </td>
-
-                  </tr>
-                );
-              })}
+                    </tr>
+                  );
+                }
+              )}
 
             </tbody>
 
           </table>
 
-          {/* No Results */}
-          {filteredResults.length === 0 && (
+          {filteredStudents.length === 0 && (
             <div className="no-students">
               No results found.
             </div>
           )}
 
         </div>
+
       </div>
 
     </section>

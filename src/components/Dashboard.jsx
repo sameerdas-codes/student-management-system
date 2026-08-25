@@ -1,8 +1,10 @@
-function Dashboard({ students, setActiveSection }) {
-  // Latest 5 students
-  const recentStudents = [...students].reverse().slice(0, 4);
+function Dashboard({
+  students = [],
+  setActiveSection,
+  defaultSemester = "6th Semester",
+}) {
+  const recentStudents = students.slice(0, 4);
 
-  // Dynamic statistics
   const totalStudents = students.length;
 
   const passedStudents = students.filter(
@@ -17,23 +19,27 @@ function Dashboard({ students, setActiveSection }) {
     totalStudents > 0
       ? Math.round(
           students.reduce(
-            (total, student) => total + Number(student.marks),
+            (total, student) =>
+              total + Number(student.marks),
             0,
           ) / totalStudents,
         )
       : 0;
 
-  // Performance distribution
   const excellent = students.filter(
     (student) => Number(student.marks) >= 80,
   ).length;
 
   const good = students.filter(
-    (student) => Number(student.marks) >= 60 && Number(student.marks) < 80,
+    (student) =>
+      Number(student.marks) >= 60 &&
+      Number(student.marks) < 80,
   ).length;
 
   const average = students.filter(
-    (student) => Number(student.marks) >= 40 && Number(student.marks) < 60,
+    (student) =>
+      Number(student.marks) >= 40 &&
+      Number(student.marks) < 60,
   ).length;
 
   const needsImprovement = students.filter(
@@ -41,7 +47,9 @@ function Dashboard({ students, setActiveSection }) {
   ).length;
 
   const getPercentage = (count) =>
-    totalStudents > 0 ? Math.round((count / totalStudents) * 100) : 0;
+    totalStudents > 0
+      ? Math.round((count / totalStudents) * 100)
+      : 0;
 
   const stats = [
     {
@@ -68,17 +76,22 @@ function Dashboard({ students, setActiveSection }) {
 
   return (
     <section className="dashboard">
-      {/* Page Heading */}
       <div className="page-heading">
         <h2>Dashboard</h2>
-        <p>Welcome back! Here's your student overview.</p>
+        <p>
+          Welcome back! Here's your student overview.
+        </p>
       </div>
 
-      {/* Statistics */}
       <div className="stats-grid">
         {stats.map((stat) => (
-          <div className="stat-card" key={stat.title}>
-            <div className="stat-icon">{stat.icon}</div>
+          <div
+            className="stat-card"
+            key={stat.title}
+          >
+            <div className="stat-icon">
+              {stat.icon}
+            </div>
 
             <div>
               <p>{stat.title}</p>
@@ -88,16 +101,16 @@ function Dashboard({ students, setActiveSection }) {
         ))}
       </div>
 
-      {/* Dashboard Bottom */}
       <div className="dashboard-grid">
-        {/* Recent Students */}
         <div className="recent-card">
           <div className="card-header">
             <h3>Recent Students</h3>
 
             <button
               className="view-all-btn"
-              onClick={() => setActiveSection("students")}
+              onClick={() =>
+                setActiveSection("students")
+              }
             >
               View All
             </button>
@@ -105,32 +118,55 @@ function Dashboard({ students, setActiveSection }) {
 
           <div className="student-list">
             {recentStudents.length > 0 ? (
-              recentStudents.map((student) => (
-                <div
-                  className="student-row"
-                  key={student.id}
-                  onClick={() => setActiveSection("students")}
-                  style={{ cursor: "pointer" }}
-                >
-                  <div className="student-avatar">
-                    {student.name.charAt(0).toUpperCase()}
-                  </div>
+              recentStudents.map(
+                (student, index) => (
+                  <div
+                    className="student-row"
+                    key={student.id}
+                    onClick={() =>
+                      setActiveSection("students")
+                    }
+                    style={{ cursor: "pointer" }}
+                  >
+                    <div className="student-number">
+                      {index + 1}
+                    </div>
 
-                  <div className="student-info">
-                    <h4>{student.name}</h4>
-                    <p>{student.course}</p>
-                  </div>
+                    <div className="student-avatar">
+                      {student.name
+                        ?.charAt(0)
+                        .toUpperCase()}
+                    </div>
 
-                  <strong>{student.marks}%</strong>
-                </div>
-              ))
+                    <div className="student-info">
+                      <h4>{student.name}</h4>
+
+                      <p>
+                        {student.registrationNo ||
+                          "No Registration Number"}
+                      </p>
+                    </div>
+
+                    <span className="student-course">
+                      {student.course}
+                    </span>
+
+                    <strong className="recent-student-semester">
+                      {student.semester ||
+                        defaultSemester ||
+                        "Not Available"}
+                    </strong>
+                  </div>
+                ),
+              )
             ) : (
-              <p>No students available.</p>
+              <div className="no-students">
+                <p>No students available.</p>
+              </div>
             )}
           </div>
         </div>
 
-        {/* Performance */}
         <div className="performance-card">
           <div className="card-header">
             <h3>Performance</h3>
@@ -139,13 +175,19 @@ function Dashboard({ students, setActiveSection }) {
           <div className="performance-item">
             <div>
               <span>Excellent</span>
-              <strong>{getPercentage(excellent)}%</strong>
+              <strong>
+                {getPercentage(excellent)}%
+              </strong>
             </div>
 
             <div className="progress">
               <div
                 className="progress-fill excellent"
-                style={{ width: `${getPercentage(excellent)}%` }}
+                style={{
+                  width: `${getPercentage(
+                    excellent,
+                  )}%`,
+                }}
               ></div>
             </div>
           </div>
@@ -153,13 +195,17 @@ function Dashboard({ students, setActiveSection }) {
           <div className="performance-item">
             <div>
               <span>Good</span>
-              <strong>{getPercentage(good)}%</strong>
+              <strong>
+                {getPercentage(good)}%
+              </strong>
             </div>
 
             <div className="progress">
               <div
                 className="progress-fill good"
-                style={{ width: `${getPercentage(good)}%` }}
+                style={{
+                  width: `${getPercentage(good)}%`,
+                }}
               ></div>
             </div>
           </div>
@@ -167,13 +213,19 @@ function Dashboard({ students, setActiveSection }) {
           <div className="performance-item">
             <div>
               <span>Average</span>
-              <strong>{getPercentage(average)}%</strong>
+              <strong>
+                {getPercentage(average)}%
+              </strong>
             </div>
 
             <div className="progress">
               <div
                 className="progress-fill average"
-                style={{ width: `${getPercentage(average)}%` }}
+                style={{
+                  width: `${getPercentage(
+                    average,
+                  )}%`,
+                }}
               ></div>
             </div>
           </div>
@@ -181,13 +233,22 @@ function Dashboard({ students, setActiveSection }) {
           <div className="performance-item">
             <div>
               <span>Needs Improvement</span>
-              <strong>{getPercentage(needsImprovement)}%</strong>
+              <strong>
+                {getPercentage(
+                  needsImprovement,
+                )}
+                %
+              </strong>
             </div>
 
             <div className="progress">
               <div
                 className="progress-fill improvement"
-                style={{ width: `${getPercentage(needsImprovement)}%` }}
+                style={{
+                  width: `${getPercentage(
+                    needsImprovement,
+                  )}%`,
+                }}
               ></div>
             </div>
           </div>
