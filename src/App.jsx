@@ -33,9 +33,11 @@ function getSavedSettings() {
       ...DEFAULT_SETTINGS,
       ...parsed,
       passingMarks:
-        Number(parsed.passingMarks) || DEFAULT_SETTINGS.passingMarks,
+        Number(parsed.passingMarks) ||
+        DEFAULT_SETTINGS.passingMarks,
       semester:
-        parsed.semester || DEFAULT_SETTINGS.semester,
+        parsed.semester ||
+        DEFAULT_SETTINGS.semester,
     };
   } catch (error) {
     console.error("Failed to load settings:", error);
@@ -47,7 +49,6 @@ function getSavedSettings() {
 function getSavedStudents() {
   try {
     const saved = localStorage.getItem("students");
-    const savedSettings = getSavedSettings();
 
     if (!saved) {
       return [];
@@ -61,11 +62,17 @@ function getSavedStudents() {
 
     const migratedStudents = parsed.map((student) => ({
       ...student,
+      registrationNo: student.registrationNo || "",
+      name: student.name || "",
+      course: student.course || "",
+      branch: student.branch || "",
       semester:
-        student.semester ||
-        savedSettings.semester ||
-        DEFAULT_SETTINGS.semester,
+        student.semester || "1st Semester",
       marks: Number(student.marks) || 0,
+      status:
+        Number(student.marks) >= 40
+          ? "Pass"
+          : "Fail",
     }));
 
     localStorage.setItem(
@@ -84,23 +91,31 @@ function getSavedStudents() {
 function App() {
   const savedSettings = getSavedSettings();
 
-  const [students, setStudents] = useState(getSavedStudents);
+  const [students, setStudents] = useState(
+    getSavedStudents
+  );
 
   const [passingMarks, setPassingMarks] = useState(
     Number(savedSettings.passingMarks) || 40
   );
 
-  const [defaultSemester, setDefaultSemester] = useState(
-    savedSettings.semester || "1st Semester"
-  );
+  const [defaultSemester, setDefaultSemester] =
+    useState(
+      savedSettings.semester ||
+        "1st Semester"
+    );
 
   const [darkMode, setDarkMode] = useState(() => {
-    return localStorage.getItem("darkMode") === "true";
+    return (
+      localStorage.getItem("darkMode") === "true"
+    );
   });
 
-  const [activeSection, setActiveSection] = useState("dashboard");
+  const [activeSection, setActiveSection] =
+    useState("dashboard");
 
-  const [editingStudent, setEditingStudent] = useState(null);
+  const [editingStudent, setEditingStudent] =
+    useState(null);
 
   const saveStudents = (updatedStudents) => {
     setStudents(updatedStudents);
@@ -116,10 +131,15 @@ function App() {
 
     const newStudent = {
       id: Date.now().toString(),
-      registrationNo: studentData.registrationNo.trim(),
+      registrationNo:
+        studentData.registrationNo.trim(),
       name: studentData.name.trim(),
       course: studentData.course,
-      semester: defaultSemester,
+      branch: studentData.branch || "",
+      semester:
+        studentData.semester ||
+        defaultSemester ||
+        "1st Semester",
       marks,
       status:
         marks >= Number(passingMarks)
@@ -151,27 +171,39 @@ function App() {
   };
 
   const handleUpdateStudent = (updatedStudent) => {
-    const updatedStudents = students.map((student) => {
-      if (student.id !== updatedStudent.id) {
-        return student;
+    const updatedStudents = students.map(
+      (student) => {
+        if (student.id !== updatedStudent.id) {
+          return student;
+        }
+
+        const marks = Number(
+          updatedStudent.marks
+        );
+
+        return {
+          ...student,
+          registrationNo:
+            student.registrationNo,
+          name: student.name,
+          course: updatedStudent.course,
+          branch:
+            updatedStudent.branch !== undefined
+              ? updatedStudent.branch
+              : student.branch || "",
+          semester:
+            updatedStudent.semester ||
+            student.semester ||
+            defaultSemester ||
+            "1st Semester",
+          marks,
+          status:
+            marks >= Number(passingMarks)
+              ? "Pass"
+              : "Fail",
+        };
       }
-
-      const marks = Number(updatedStudent.marks);
-
-      return {
-        ...student,
-        course: updatedStudent.course,
-        semester:
-          updatedStudent.semester ||
-          student.semester ||
-          defaultSemester,
-        marks,
-        status:
-          marks >= Number(passingMarks)
-            ? "Pass"
-            : "Fail",
-      };
-    });
+    );
 
     saveStudents(updatedStudents);
 
@@ -252,7 +284,9 @@ function App() {
               passingMarks={passingMarks}
               setPassingMarks={setPassingMarks}
               defaultSemester={defaultSemester}
-              setDefaultSemester={setDefaultSemester}
+              setDefaultSemester={
+                setDefaultSemester
+              }
             />
           )}
         </main>
