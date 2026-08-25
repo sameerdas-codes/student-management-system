@@ -2,8 +2,21 @@ function Dashboard({
   students = [],
   setActiveSection,
 }) {
-  const recentStudents =
-    students.slice(0, 4);
+  /*
+    Recent Students Logic:
+
+    - Newly added students get updatedAt in App.jsx
+    - Edited students get a new updatedAt in App.jsx
+    - Latest activity appears first
+    - Only latest 4 students are shown
+  */
+  const recentStudents = [...students]
+    .sort(
+      (a, b) =>
+        (Number(b.updatedAt) || 0) -
+        (Number(a.updatedAt) || 0)
+    )
+    .slice(0, 4);
 
   const totalStudents =
     students.length;
@@ -71,19 +84,16 @@ function Dashboard({
       value: totalStudents,
       icon: "👨‍🎓",
     },
-
     {
       title: "Passed Students",
       value: passedStudents,
       icon: "✅",
     },
-
     {
       title: "Failed Students",
       value: failedStudents,
       icon: "❌",
     },
-
     {
       title: "Average Marks",
       value: `${averageMarks}%`,

@@ -21,7 +21,6 @@ const DEFAULT_SETTINGS = {
 
 /*
   New students ALWAYS start from 1st Semester.
-  Settings semester is not used for new student creation.
 */
 const NEW_STUDENT_SEMESTER = "1st Semester";
 
@@ -40,13 +39,18 @@ function getSavedSettings() {
       ...parsed,
 
       passingMarks:
-        Number(parsed.passingMarks) || DEFAULT_SETTINGS.passingMarks,
+        Number(parsed.passingMarks) ||
+        DEFAULT_SETTINGS.passingMarks,
 
       semester:
-        parsed.semester || DEFAULT_SETTINGS.semester,
+        parsed.semester ||
+        DEFAULT_SETTINGS.semester,
     };
   } catch (error) {
-    console.error("Failed to load settings:", error);
+    console.error(
+      "Failed to load settings:",
+      error
+    );
 
     return { ...DEFAULT_SETTINGS };
   }
@@ -54,7 +58,8 @@ function getSavedSettings() {
 
 function getSavedStudents() {
   try {
-    const saved = localStorage.getItem("students");
+    const saved =
+      localStorage.getItem("students");
 
     if (!saved) {
       return [];
@@ -66,50 +71,64 @@ function getSavedStudents() {
       return [];
     }
 
-    /*
-      IMPORTANT:
-      Existing students keep their saved semester.
-      We DO NOT replace their semester with settings.
-    */
-    const migratedStudents = parsed.map((student) => {
-      const marks = Number(student.marks) || 0;
+    const now = Date.now();
 
-      return {
-        ...student,
-
-        id:
-          student.id ||
-          Date.now().toString() + Math.random().toString(36),
-
-        registrationNo:
-          student.registrationNo || "",
-
-        name:
-          student.name || "",
-
-        course:
-          student.course || "",
-
-        branch:
-          student.branch || "",
+    const migratedStudents = parsed.map(
+      (student, index) => {
+        const marks =
+          Number(student.marks) || 0;
 
         /*
-          Only students that genuinely have no semester
-          get 1st Semester.
+          Existing students may not have updatedAt
+          because they were created before this feature.
+
+          Give them a safe old timestamp so that
+          newly added/edited students appear first.
         */
-        semester:
-          student.semester || NEW_STUDENT_SEMESTER,
+        const updatedAt =
+          Number(student.updatedAt) ||
+          now - index;
 
-        marks,
+        return {
+          ...student,
 
-        status:
-          marks >= Number(
-            student.passingMarks || DEFAULT_SETTINGS.passingMarks
-          )
-            ? "Pass"
-            : "Fail",
-      };
-    });
+          id:
+            student.id ||
+            `${Date.now()}-${Math.random()
+              .toString(36)
+              .slice(2)}`,
+
+          registrationNo:
+            student.registrationNo || "",
+
+          name:
+            student.name || "",
+
+          course:
+            student.course || "",
+
+          branch:
+            student.branch || "",
+
+          semester:
+            student.semester ||
+            NEW_STUDENT_SEMESTER,
+
+          marks,
+
+          updatedAt,
+
+          status:
+            marks >=
+            Number(
+              student.passingMarks ||
+                DEFAULT_SETTINGS.passingMarks
+            )
+              ? "Pass"
+              : "Fail",
+        };
+      }
+    );
 
     localStorage.setItem(
       "students",
@@ -118,32 +137,42 @@ function getSavedStudents() {
 
     return migratedStudents;
   } catch (error) {
-    console.error("Failed to load students:", error);
+    console.error(
+      "Failed to load students:",
+      error
+    );
 
     return [];
   }
 }
 
 function App() {
-  const savedSettings = getSavedSettings();
+  const savedSettings =
+    getSavedSettings();
 
-  const [students, setStudents] = useState(
-    getSavedStudents
-  );
+  const [students, setStudents] =
+    useState(getSavedStudents);
 
-  const [passingMarks, setPassingMarks] = useState(
-    Number(savedSettings.passingMarks) || 40
-  );
-
-  const [defaultSemester, setDefaultSemester] = useState(
-    savedSettings.semester || "1st Semester"
-  );
-
-  const [darkMode, setDarkMode] = useState(() => {
-    return (
-      localStorage.getItem("darkMode") === "true"
+  const [passingMarks, setPassingMarks] =
+    useState(
+      Number(savedSettings.passingMarks) ||
+        40
     );
-  });
+
+  const [defaultSemester, setDefaultSemester] =
+    useState(
+      savedSettings.semester ||
+        "1st Semester"
+    );
+
+  const [darkMode, setDarkMode] =
+    useState(() => {
+      return (
+        localStorage.getItem(
+          "darkMode"
+        ) === "true"
+      );
+    });
 
   const [activeSection, setActiveSection] =
     useState("dashboard");
@@ -151,7 +180,9 @@ function App() {
   const [editingStudent, setEditingStudent] =
     useState(null);
 
-  const saveStudents = (updatedStudents) => {
+  const saveStudents = (
+    updatedStudents
+  ) => {
     setStudents(updatedStudents);
 
     localStorage.setItem(
@@ -162,9 +193,15 @@ function App() {
 
   /*
     ADD NEW STUDENT
+
+    New student gets current timestamp.
+    Therefore it becomes a Recent Student.
   */
-  const handleAddStudent = (studentData) => {
-    const marks = Number(studentData.marks);
+  const handleAddStudent = (
+    studentData
+  ) => {
+    const marks =
+      Number(studentData.marks);
 
     const newStudent = {
       id: Date.now().toString(),
@@ -181,11 +218,8 @@ function App() {
       branch:
         studentData.branch || "",
 
-      /*
-        IMPORTANT:
-        New students ALWAYS start from 1st Semester.
-      */
-      semester: NEW_STUDENT_SEMESTER,
+      semester:
+        NEW_STUDENT_SEMESTER,
 
       marks,
 
@@ -193,6 +227,12 @@ function App() {
         marks >= Number(passingMarks)
           ? "Pass"
           : "Fail",
+
+      /*
+        IMPORTANT:
+        This controls Recent Students.
+      */
+      updatedAt: Date.now(),
     };
 
     const updatedStudents = [
@@ -208,10 +248,14 @@ function App() {
   /*
     DELETE STUDENT
   */
-  const handleDeleteStudent = (id) => {
-    const updatedStudents = students.filter(
-      (student) => student.id !== id
-    );
+  const handleDeleteStudent = (
+    id
+  ) => {
+    const updatedStudents =
+      students.filter(
+        (student) =>
+          student.id !== id
+      );
 
     saveStudents(updatedStudents);
   };
@@ -219,7 +263,9 @@ function App() {
   /*
     OPEN EDIT PAGE
   */
-  const handleEditStudent = (student) => {
+  const handleEditStudent = (
+    student
+  ) => {
     setEditingStudent(student);
 
     setActiveSection("edit");
@@ -227,56 +273,73 @@ function App() {
 
   /*
     UPDATE STUDENT
+
+    Whenever a student is edited,
+    updatedAt becomes Date.now().
+
+    Therefore that student moves to
+    the top of Recent Students.
   */
-  const handleUpdateStudent = (updatedStudent) => {
-    const updatedStudents = students.map(
-      (student) => {
-        if (student.id !== updatedStudent.id) {
-          return student;
+  const handleUpdateStudent = (
+    updatedStudent
+  ) => {
+    const updatedStudents =
+      students.map(
+        (student) => {
+          if (
+            student.id !==
+            updatedStudent.id
+          ) {
+            return student;
+          }
+
+          const marks =
+            Number(
+              updatedStudent.marks
+            );
+
+          return {
+            ...student,
+
+            /*
+              Identity fields stay protected.
+            */
+            registrationNo:
+              student.registrationNo,
+
+            name:
+              student.name,
+
+            course:
+              updatedStudent.course,
+
+            branch:
+              updatedStudent.branch !==
+              undefined
+                ? updatedStudent.branch
+                : student.branch || "",
+
+            semester:
+              updatedStudent.semester ||
+              student.semester ||
+              NEW_STUDENT_SEMESTER,
+
+            marks,
+
+            status:
+              marks >=
+              Number(passingMarks)
+                ? "Pass"
+                : "Fail",
+
+            /*
+              IMPORTANT:
+              Edited student becomes recent.
+            */
+            updatedAt: Date.now(),
+          };
         }
-
-        const marks = Number(
-          updatedStudent.marks
-        );
-
-        return {
-          ...student,
-
-          /*
-            Identity fields stay protected.
-          */
-          registrationNo:
-            student.registrationNo,
-
-          name:
-            student.name,
-
-          course:
-            updatedStudent.course,
-
-          branch:
-            updatedStudent.branch !== undefined
-              ? updatedStudent.branch
-              : student.branch || "",
-
-          /*
-            Semester can ONLY be changed
-            from Edit Student.
-          */
-          semester:
-            updatedStudent.semester ||
-            student.semester ||
-            NEW_STUDENT_SEMESTER,
-
-          marks,
-
-          status:
-            marks >= Number(passingMarks)
-              ? "Pass"
-              : "Fail",
-        };
-      }
-    );
+      );
 
     saveStudents(updatedStudents);
 
@@ -288,34 +351,48 @@ function App() {
   return (
     <div
       className={`app ${
-        darkMode ? "dark-mode" : ""
+        darkMode
+          ? "dark-mode"
+          : ""
       }`}
     >
       <Sidebar
-        activeSection={activeSection}
-        setActiveSection={setActiveSection}
+        activeSection={
+          activeSection
+        }
+        setActiveSection={
+          setActiveSection
+        }
       />
 
       <div className="main-area">
 
         <Navbar
           darkMode={darkMode}
-          setDarkMode={setDarkMode}
+          setDarkMode={
+            setDarkMode
+          }
         />
 
         <main className="content">
 
-          {activeSection === "dashboard" && (
+          {activeSection ===
+            "dashboard" && (
             <Dashboard
               students={students}
-              setActiveSection={setActiveSection}
+              setActiveSection={
+                setActiveSection
+              }
             />
           )}
 
-          {activeSection === "students" && (
+          {activeSection ===
+            "students" && (
             <Students
               students={students}
-              passingMarks={passingMarks}
+              passingMarks={
+                passingMarks
+              }
               onDeleteStudent={
                 handleDeleteStudent
               }
@@ -345,8 +422,12 @@ function App() {
 
           {activeSection === "edit" && (
             <EditStudent
-              student={editingStudent}
-              passingMarks={passingMarks}
+              student={
+                editingStudent
+              }
+              passingMarks={
+                passingMarks
+              }
               defaultSemester={
                 NEW_STUDENT_SEMESTER
               }
@@ -359,19 +440,29 @@ function App() {
             />
           )}
 
-          {activeSection === "results" && (
+          {activeSection ===
+            "results" && (
             <Results
               students={students}
-              passingMarks={passingMarks}
+              passingMarks={
+                passingMarks
+              }
             />
           )}
 
-          {activeSection === "settings" && (
+          {activeSection ===
+            "settings" && (
             <Settings
               darkMode={darkMode}
-              setDarkMode={setDarkMode}
-              setStudents={setStudents}
-              passingMarks={passingMarks}
+              setDarkMode={
+                setDarkMode
+              }
+              setStudents={
+                setStudents
+              }
+              passingMarks={
+                passingMarks
+              }
               setPassingMarks={
                 setPassingMarks
               }
