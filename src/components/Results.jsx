@@ -4,67 +4,85 @@ function Results({
   students = [],
   passingMarks = 40,
 }) {
-  const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("All");
+  const [search, setSearch] =
+    useState("");
+
+  const [filter, setFilter] =
+    useState("All");
+
   const [semesterFilter, setSemesterFilter] =
     useState("All");
 
   const semesters = [
     ...new Set(
       students
-        .map((student) => student.semester)
+        .map(
+          (student) =>
+            student.semester
+        )
         .filter(Boolean)
     ),
   ];
 
-  const filteredStudents = students.filter(
-    (student) => {
-      const searchText =
-        search.toLowerCase().trim();
+  const filteredStudents =
+    students.filter(
+      (student) => {
+        const searchText =
+          search
+            .toLowerCase()
+            .trim();
 
-      const matchesSearch =
-        student.name
-          ?.toLowerCase()
-          .includes(searchText) ||
-        student.registrationNo
-          ?.toLowerCase()
-          .includes(searchText) ||
-        student.course
-          ?.toLowerCase()
-          .includes(searchText) ||
-        student.semester
-          ?.toLowerCase()
-          .includes(searchText);
+        const matchesSearch =
+          student.name
+            ?.toLowerCase()
+            .includes(searchText) ||
+          student.registrationNo
+            ?.toLowerCase()
+            .includes(searchText) ||
+          student.course
+            ?.toLowerCase()
+            .includes(searchText) ||
+          student.branch
+            ?.toLowerCase()
+            .includes(searchText) ||
+          student.semester
+            ?.toLowerCase()
+            .includes(searchText);
 
-      const marks = Number(student.marks);
+        const marks =
+          Number(student.marks);
 
-      const status =
-        marks >= Number(passingMarks)
-          ? "Pass"
-          : "Fail";
+        const status =
+          marks >=
+          Number(passingMarks)
+            ? "Pass"
+            : "Fail";
 
-      const matchesFilter =
-        filter === "All" ||
-        status === filter;
+        const matchesFilter =
+          filter === "All" ||
+          status === filter;
 
-      const matchesSemester =
-        semesterFilter === "All" ||
-        student.semester === semesterFilter;
+        const matchesSemester =
+          semesterFilter === "All" ||
+          student.semester ===
+            semesterFilter;
 
-      return (
-        matchesSearch &&
-        matchesFilter &&
-        matchesSemester
-      );
-    }
-  );
+        return (
+          matchesSearch &&
+          matchesFilter &&
+          matchesSemester
+        );
+      }
+    );
 
   return (
     <section className="results-page">
 
       <div className="page-heading">
 
-        <h2>Results</h2>
+        <h2>
+          Results
+        </h2>
 
         <p>
           View student academic results.
@@ -84,7 +102,9 @@ function Results({
             placeholder="Search students..."
             value={search}
             onChange={(e) =>
-              setSearch(e.target.value)
+              setSearch(
+                e.target.value
+              )
             }
           />
 
@@ -92,13 +112,15 @@ function Results({
 
         <div className="student-actions">
 
-          {/* Status Filter */}
           <select
             value={filter}
             onChange={(e) =>
-              setFilter(e.target.value)
+              setFilter(
+                e.target.value
+              )
             }
           >
+
             <option value="All">
               All Results
             </option>
@@ -110,27 +132,35 @@ function Results({
             <option value="Fail">
               Failed
             </option>
+
           </select>
 
-          {/* Semester Filter */}
           <select
-            value={semesterFilter}
+            value={
+              semesterFilter
+            }
             onChange={(e) =>
-              setSemesterFilter(e.target.value)
+              setSemesterFilter(
+                e.target.value
+              )
             }
           >
+
             <option value="All">
               All Semesters
             </option>
 
-            {semesters.map((semester) => (
-              <option
-                key={semester}
-                value={semester}
-              >
-                {semester}
-              </option>
-            ))}
+            {semesters.map(
+              (semester) => (
+                <option
+                  key={semester}
+                  value={semester}
+                >
+                  {semester}
+                </option>
+              )
+            )}
+
           </select>
 
         </div>
@@ -141,7 +171,9 @@ function Results({
 
         <div className="table-header">
 
-          <h3>Student Results</h3>
+          <h3>
+            Student Results
+          </h3>
 
           <span>
             {filteredStudents.length} Students
@@ -154,15 +186,18 @@ function Results({
           <table>
 
             <thead>
+
               <tr>
                 <th>#</th>
                 <th>Student</th>
                 <th>Registration Number</th>
                 <th>Course</th>
+                <th>Branch</th>
                 <th>Semester</th>
                 <th>Marks</th>
                 <th>Status</th>
               </tr>
+
             </thead>
 
             <tbody>
@@ -170,19 +205,31 @@ function Results({
               {filteredStudents.map(
                 (student, index) => {
                   const marks =
-                    Number(student.marks);
+                    Number(
+                      student.marks
+                    );
 
                   const status =
-                    marks >= Number(passingMarks)
+                    marks >=
+                    Number(
+                      passingMarks
+                    )
                       ? "Pass"
                       : "Fail";
 
                   return (
-                    <tr key={student.id}>
-
-                      <td>{index + 1}</td>
+                    <tr
+                      key={
+                        student.id
+                      }
+                    >
 
                       <td>
+                        {index + 1}
+                      </td>
+
+                      <td>
+
                         <div className="student-cell">
 
                           <div className="table-avatar">
@@ -196,44 +243,66 @@ function Results({
                           </span>
 
                         </div>
+
                       </td>
 
                       <td>
+
                         <span className="table-value-box">
                           {student.registrationNo ||
                             "Not Available"}
                         </span>
+
                       </td>
 
                       <td>
-                        <span className="table-value-box">
-                          {student.course}
-                        </span>
-                      </td>
 
-                      <td>
                         <span className="table-value-box">
-                          {student.semester ||
+                          {student.course ||
                             "Not Available"}
                         </span>
+
                       </td>
 
                       <td>
+
+                        <span className="table-value-box">
+                          {student.branch ||
+                            "—"}
+                        </span>
+
+                      </td>
+
+                      <td>
+
+                        <span className="table-value-box">
+                          {student.semester ||
+                            "1st Semester"}
+                        </span>
+
+                      </td>
+
+                      <td>
+
                         <span className="table-value-box marks-box">
                           {marks}%
                         </span>
+
                       </td>
 
                       <td>
+
                         <span
                           className={`status ${
-                            status === "Pass"
+                            status ===
+                            "Pass"
                               ? "status-pass"
                               : "status-fail"
                           }`}
                         >
                           {status}
                         </span>
+
                       </td>
 
                     </tr>
@@ -245,7 +314,8 @@ function Results({
 
           </table>
 
-          {filteredStudents.length === 0 && (
+          {filteredStudents.length ===
+            0 && (
             <div className="no-students">
               No results found.
             </div>

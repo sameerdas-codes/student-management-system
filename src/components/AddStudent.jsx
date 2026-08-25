@@ -25,9 +25,49 @@ function AddStudent({
   });
 
   const [error, setError] = useState("");
+  const [registrationError, setRegistrationError] =
+    useState("");
+
+  // Check registration number when user leaves the field
+  const checkRegistrationNumber = (value) => {
+    const registrationNo = value.trim();
+
+    if (!registrationNo) {
+      setRegistrationError("");
+      return;
+    }
+
+    const registrationExists = students.some(
+      (student) =>
+        String(student.registrationNo || "")
+          .trim()
+          .toLowerCase() === registrationNo.toLowerCase()
+    );
+
+    if (registrationExists) {
+      setRegistrationError(
+        "This registration number already exists. Please enter a different one."
+      );
+    } else {
+      setRegistrationError("");
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+
+    if (name === "registrationNo") {
+      setFormData((prev) => ({
+        ...prev,
+        registrationNo: value,
+      }));
+
+      // Clear duplicate message while user is typing.
+      // The duplicate check will run again on blur.
+      setRegistrationError("");
+
+      return;
+    }
 
     if (name === "course") {
       setFormData((prev) => ({
@@ -64,28 +104,25 @@ function AddStudent({
     const registrationNo =
       formData.registrationNo.trim();
 
-    const name =
-      formData.name.trim();
+    const name = formData.name.trim();
+    const course = formData.course;
+    const branch = formData.branch;
+    const marks = Number(formData.marks);
 
-    const course =
-      formData.course;
-
-    const branch =
-      formData.branch;
-
-    const marks =
-      Number(formData.marks);
-
+    // Required fields
     if (
       !registrationNo ||
       !name ||
       !course ||
       formData.marks === ""
     ) {
-      setError("Please fill all required fields.");
+      setError(
+        "Please fill all required fields."
+      );
       return;
     }
 
+    // Check branch
     const hasBranches =
       (COURSE_BRANCHES[course] || []).length > 0;
 
@@ -94,20 +131,28 @@ function AddStudent({
       return;
     }
 
-    const registrationExists =
-      students.some(
-        (student) =>
-          student.registrationNo?.toLowerCase() ===
-          registrationNo.toLowerCase()
-      );
+    // Final duplicate check before saving
+    const registrationExists = students.some(
+      (student) =>
+        String(student.registrationNo || "")
+          .trim()
+          .toLowerCase() === registrationNo.toLowerCase()
+    );
 
     if (registrationExists) {
-      setError(
+      setRegistrationError(
         "This registration number already exists. Please enter a different one."
       );
+
+      // Keep user on the form
+      document
+        .getElementById("registrationNo")
+        ?.focus();
+
       return;
     }
 
+    // Marks validation
     if (
       Number.isNaN(marks) ||
       marks < 0 ||
@@ -118,6 +163,10 @@ function AddStudent({
       );
       return;
     }
+
+    // Everything is valid
+    setRegistrationError("");
+    setError("");
 
     onAddStudent({
       registrationNo,
@@ -135,7 +184,6 @@ function AddStudent({
 
   return (
     <section className="add-student-page">
-
       <div className="add-page-header">
         <div>
           <div className="breadcrumb">
@@ -162,9 +210,7 @@ function AddStudent({
       </div>
 
       <div className="add-student-layout">
-
         <div className="student-info-card">
-
           <div className="info-icon">
             👨‍🎓
           </div>
@@ -177,7 +223,6 @@ function AddStudent({
           </p>
 
           <div className="info-list">
-
             <div className="info-item">
               <span>✓</span>
 
@@ -248,14 +293,11 @@ function AddStudent({
                 </small>
               </div>
             </div>
-
           </div>
         </div>
 
         <div className="add-student-card">
-
           <div className="add-student-header">
-
             <div>
               <h3>
                 Student Information
@@ -269,19 +311,22 @@ function AddStudent({
             <div className="form-badge">
               New Student
             </div>
-
           </div>
 
           <form onSubmit={handleSubmit}>
-
+            {/* Registration Number */}
             <div className="form-group">
-
               <label htmlFor="registrationNo">
                 Registration Number
               </label>
 
-              <div className="input-wrapper">
-
+              <div
+                className={`input-wrapper ${
+                  registrationError
+                    ? "input-error"
+                    : ""
+                }`}
+              >
                 <span>🆔</span>
 
                 <input
@@ -293,28 +338,39 @@ function AddStudent({
                     formData.registrationNo
                   }
                   onChange={handleChange}
+                  onBlur={(e) =>
+                    checkRegistrationNumber(
+                      e.target.value
+                    )
+                  }
                   autoComplete="off"
                 />
-
               </div>
 
-              <small className="input-hint">
-                This number is manually assigned
-                to the student.
-              </small>
+              {/* Duplicate error appears inside website */}
+              {registrationError && (
+                <div className="field-error">
+                  <span>⚠</span>
+                  {registrationError}
+                </div>
+              )}
 
+              {!registrationError && (
+                <small className="input-hint">
+                  This number is manually assigned
+                  to the student.
+                </small>
+              )}
             </div>
 
+            {/* Name + Course */}
             <div className="form-row">
-
               <div className="form-group">
-
                 <label htmlFor="name">
                   Student Name
                 </label>
 
                 <div className="input-wrapper">
-
                   <span>👤</span>
 
                   <input
@@ -326,19 +382,15 @@ function AddStudent({
                     onChange={handleChange}
                     autoComplete="off"
                   />
-
                 </div>
-
               </div>
 
               <div className="form-group">
-
                 <label htmlFor="course">
                   Course
                 </label>
 
                 <div className="input-wrapper">
-
                   <span>🎓</span>
 
                   <select
@@ -366,23 +418,18 @@ function AddStudent({
                     <option value="MCA">
                       MCA
                     </option>
-
                   </select>
-
                 </div>
-
               </div>
-
             </div>
 
+            {/* Branch */}
             <div className="form-group">
-
               <label htmlFor="branch">
                 Branch
               </label>
 
               <div className="input-wrapper">
-
                 <span>🏫</span>
 
                 <select
@@ -395,7 +442,6 @@ function AddStudent({
                     branchOptions.length === 0
                   }
                 >
-
                   {!formData.course && (
                     <option value="">
                       Select course first
@@ -409,17 +455,17 @@ function AddStudent({
                       </option>
                     )}
 
-                  {branchOptions.map((branch) => (
-                    <option
-                      key={branch}
-                      value={branch}
-                    >
-                      {branch}
-                    </option>
-                  ))}
-
+                  {branchOptions.map(
+                    (branch) => (
+                      <option
+                        key={branch}
+                        value={branch}
+                      >
+                        {branch}
+                      </option>
+                    )
+                  )}
                 </select>
-
               </div>
 
               <small className="input-hint">
@@ -429,17 +475,15 @@ function AddStudent({
                   ? "This course does not require a branch."
                   : "Select a course to view branches."}
               </small>
-
             </div>
 
+            {/* Semester */}
             <div className="form-group">
-
               <label>
                 Starting Semester
               </label>
 
               <div className="input-wrapper">
-
                 <span>📚</span>
 
                 <input
@@ -448,25 +492,22 @@ function AddStudent({
                   readOnly
                   disabled
                 />
-
               </div>
 
               <small className="input-hint">
-                New students automatically start from
-                1st Semester. You can change the semester
-                later from Edit Student.
+                New students automatically start
+                from 1st Semester. You can change
+                the semester later from Edit Student.
               </small>
-
             </div>
 
+            {/* Marks */}
             <div className="form-group marks-group">
-
               <label htmlFor="marks">
                 Marks <span>(Percentage)</span>
               </label>
 
               <div className="marks-input-wrapper">
-
                 <input
                   id="marks"
                   name="marks"
@@ -479,15 +520,14 @@ function AddStudent({
                 />
 
                 <span>%</span>
-
               </div>
 
               <small className="input-hint">
                 Enter a value between 0 and 100.
               </small>
-
             </div>
 
+            {/* General form error */}
             {error && (
               <div className="form-error">
                 <span>⚠</span>
@@ -498,7 +538,6 @@ function AddStudent({
             <div className="form-divider"></div>
 
             <div className="form-actions">
-
               <button
                 type="button"
                 className="cancel-btn"
@@ -516,15 +555,10 @@ function AddStudent({
                 <span>+</span>
                 Add Student
               </button>
-
             </div>
-
           </form>
-
         </div>
-
       </div>
-
     </section>
   );
 }

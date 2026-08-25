@@ -8,6 +8,7 @@ function Students({
   setActiveSection,
 }) {
   const [search, setSearch] = useState("");
+
   const [filter, setFilter] = useState("All");
 
   const filteredStudents = students.filter(
@@ -25,11 +26,16 @@ function Students({
         student.course
           ?.toLowerCase()
           .includes(searchText) ||
+        student.branch
+          ?.toLowerCase()
+          .includes(searchText) ||
         student.semester
           ?.toLowerCase()
           .includes(searchText);
 
-      const marks = Number(student.marks);
+      const marks = Number(
+        student.marks
+      );
 
       const status =
         marks >= Number(passingMarks)
@@ -40,14 +46,18 @@ function Students({
         filter === "All" ||
         status === filter;
 
-      return matchesSearch && matchesFilter;
+      return (
+        matchesSearch &&
+        matchesFilter
+      );
     }
   );
 
   const handleDelete = (id) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this student?"
-    );
+    const confirmDelete =
+      window.confirm(
+        "Are you sure you want to delete this student?"
+      );
 
     if (!confirmDelete) {
       return;
@@ -60,11 +70,13 @@ function Students({
     <section className="students-page">
 
       <div className="page-heading">
+
         <h2>Students</h2>
 
         <p>
           Manage all students from one place.
         </p>
+
       </div>
 
       <div className="students-toolbar">
@@ -135,16 +147,19 @@ function Students({
           <table>
 
             <thead>
+
               <tr>
                 <th>#</th>
                 <th>Student</th>
                 <th>Registration Number</th>
                 <th>Course</th>
+                <th>Branch</th>
                 <th>Semester</th>
                 <th>Marks</th>
                 <th>Status</th>
                 <th>Actions</th>
               </tr>
+
             </thead>
 
             <tbody>
@@ -155,16 +170,23 @@ function Students({
                     Number(student.marks);
 
                   const status =
-                    marks >= Number(passingMarks)
+                    marks >= Number(
+                      passingMarks
+                    )
                       ? "Pass"
                       : "Fail";
 
                   return (
-                    <tr key={student.id}>
-
-                      <td>{index + 1}</td>
+                    <tr
+                      key={student.id}
+                    >
 
                       <td>
+                        {index + 1}
+                      </td>
+
+                      <td>
+
                         <div className="student-cell">
 
                           <div className="table-avatar">
@@ -178,6 +200,7 @@ function Students({
                           </span>
 
                         </div>
+
                       </td>
 
                       <td>
@@ -189,14 +212,22 @@ function Students({
 
                       <td>
                         <span className="table-value-box">
-                          {student.course}
+                          {student.course ||
+                            "Not Available"}
+                        </span>
+                      </td>
+
+                      <td>
+                        <span className="table-value-box">
+                          {student.branch ||
+                            "—"}
                         </span>
                       </td>
 
                       <td>
                         <span className="table-value-box">
                           {student.semester ||
-                            "Not Available"}
+                            "1st Semester"}
                         </span>
                       </td>
 
@@ -207,6 +238,7 @@ function Students({
                       </td>
 
                       <td>
+
                         <span
                           className={`status ${
                             status === "Pass"
@@ -216,6 +248,7 @@ function Students({
                         >
                           {status}
                         </span>
+
                       </td>
 
                       <td>
